@@ -29,10 +29,9 @@ namespace CopyFunctionBreakpointName
 
             switch (csharpSyntaxRoot.FindNode(selectionRange))
             {
-                case MethodDeclarationSyntax method when method.ExplicitInterfaceSpecifier == null
-                                                         && IsFunctionNameSpan(method, selectionRange):
+                case MethodDeclarationSyntax method when IsFunctionNameSpan(method, selectionRange):
                 {
-                    return new FunctionBreakpointNameFactory(method, method.Identifier, accessor: null, method.TypeParameterList);
+                    return new FunctionBreakpointNameFactory(method, method.Identifier, accessor: null, method.TypeParameterList, method.ParameterList);
                 }
 
                 case ConstructorDeclarationSyntax constructor when constructor.Identifier.Span.Contains(selectionRange):
@@ -44,12 +43,13 @@ namespace CopyFunctionBreakpointName
                     return new FunctionBreakpointNameFactory(
                         constructor,
                         isStatic ? SyntaxFactory.Identifier("cctor") : constructor.Identifier,
-                        accessor: null);
+                        accessor: null,
+                        parameters: constructor.ParameterList);
                 }
 
                 case DestructorDeclarationSyntax destructor when destructor.Identifier.Span.Contains(selectionRange):
                 {
-                    return new FunctionBreakpointNameFactory(destructor, SyntaxFactory.Identifier("Finalize"));
+                    return new FunctionBreakpointNameFactory(destructor, SyntaxFactory.Identifier("Finalize"), parameters: destructor.ParameterList);
                 }
 
                 case PropertyDeclarationSyntax property when property.ExplicitInterfaceSpecifier == null

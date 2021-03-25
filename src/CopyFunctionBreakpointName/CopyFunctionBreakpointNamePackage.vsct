@@ -15,7 +15,7 @@
         <Parent guid="guidCopyFunctionBreakpointNamePackageCmdSet" id="MyMenuGroup" />
         <CommandFlag>DynamicVisibility</CommandFlag>
         <Strings>
-          <ButtonText>Copy function breakpoint name</ButtonText>
+          <ButtonText>Copy location</ButtonText>
         </Strings>
       </Button>
     </Buttons>

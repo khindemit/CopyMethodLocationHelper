@@ -8,6 +8,7 @@ namespace CopyFunctionBreakpointName
 {
     public readonly struct FunctionBreakpointNameFactory
     {
+        private readonly string solutionPath;
         private readonly CSharpSyntaxNode member;
         private readonly SyntaxToken memberIdentifier;
         private readonly AccessorDeclarationSyntax accessor;
@@ -15,12 +16,14 @@ namespace CopyFunctionBreakpointName
         private readonly ParameterListSyntax parameters;
 
         public FunctionBreakpointNameFactory(
+            string solutionPath,
             CSharpSyntaxNode member,
             SyntaxToken memberIdentifier,
             AccessorDeclarationSyntax accessor = null,
             TypeParameterListSyntax typeParameters = null,
             ParameterListSyntax parameters = null)
         {
+            this.solutionPath = solutionPath;
             this.member = member;
             this.memberIdentifier = memberIdentifier;
             this.accessor = accessor;
@@ -91,7 +94,9 @@ namespace CopyFunctionBreakpointName
             var location = memberIdentifier.Parent.GetLocation();
             sb.AppendLine().Append("at ");
             string fullFilePath = location.SourceTree.FilePath;
-            sb.Append(fullFilePath);
+            string solutionDir = System.IO.Path.GetDirectoryName(solutionPath);
+            string relativeFilePath = fullFilePath.Replace(solutionDir, string.Empty);
+            sb.Append(relativeFilePath.Replace('\\', '/'));
             var lineSpan = location.GetLineSpan();
             sb.Append("[:").Append(lineSpan.StartLinePosition.Line + 1).Append("]");
 

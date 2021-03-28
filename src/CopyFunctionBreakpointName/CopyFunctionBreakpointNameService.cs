@@ -18,19 +18,22 @@ namespace CopyFunctionBreakpointName
     {
         private static readonly CommandID MenuCommand = new CommandID(new Guid("840b69a0-a468-4950-8c25-16bb7a846a58"), 0x0100);
 
+        private readonly string solutionPath;
         private readonly IVsTextManager textManager;
         private readonly IVsEditorAdaptersFactoryService editorAdaptersFactoryService;
         private readonly IVsStatusbar statusBar;
         private readonly JoinableTaskFactory joinableTaskFactory;
 
-        public CopyFunctionBreakpointNameService(IVsTextManager textManager,
+        public CopyFunctionBreakpointNameService(
+            string solutionPath,
+            IVsTextManager textManager,
             IVsEditorAdaptersFactoryService editorAdaptersFactoryService,
             IMenuCommandService menuCommandService,
             IVsStatusbar statusBar,
             JoinableTaskFactory joinableTaskFactory)
         {
             if (menuCommandService == null) throw new ArgumentNullException(nameof(menuCommandService));
-
+            this.solutionPath = solutionPath;
             this.textManager = textManager ?? throw new ArgumentNullException(nameof(textManager));
             this.editorAdaptersFactoryService = editorAdaptersFactoryService ?? throw new ArgumentNullException(nameof(editorAdaptersFactoryService));
             this.statusBar = statusBar ?? throw new ArgumentNullException(nameof(statusBar));
@@ -43,8 +46,8 @@ namespace CopyFunctionBreakpointName
         private void OnMenuCommandInvoked(object sender, EventArgs e)
         {
             joinableTaskFactory.Run(
-                "Copy function breakpoint name",
-                "Copying the function breakpoint name to the clipboard...",
+                "Copy location",
+                "Copying the location to the clipboard...",
                 async (progress, cancellationToken) =>
                 {
                     var factory = await GetFunctionBreakpointNameFactoryAsync(cancellationToken);
@@ -53,7 +56,7 @@ namespace CopyFunctionBreakpointName
 
                     if (factory == null)
                     {
-                        statusBar.SetText("Could not determine a function breakpoint name for the selected syntax");
+                        statusBar.SetText("Could not determine a location for the selected syntax");
                     }
                     else
                     {
@@ -88,6 +91,7 @@ namespace CopyFunctionBreakpointName
             var document = activeViewSelection.Start.Position.Snapshot.GetOpenDocumentInCurrentContextWithChanges();
 
             return await FunctionBreakpointUtils.GetFunctionBreakpointNameFactoryAsync(
+                solutionPath,
                 await document.GetSyntaxRootAsync(cancellationToken),
                 TextSpan.FromBounds(
                     activeViewSelection.Start.Position.Position,

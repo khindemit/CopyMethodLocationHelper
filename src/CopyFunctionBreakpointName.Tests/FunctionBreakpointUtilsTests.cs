@@ -18,7 +18,7 @@ namespace CopyFunctionBreakpointName.Tests
         public static async Task Null_syntax_root_argument_exception()
         {
             var ex = await Should.ThrowAsync<ArgumentNullException>(
-                () => FunctionBreakpointUtils.GetFunctionBreakpointNameFactoryAsync(syntaxRoot: null, new TextSpan(0, 0), c => null, default));
+                () => FunctionBreakpointUtils.GetFunctionBreakpointNameFactoryAsync(string.Empty, syntaxRoot: null, new TextSpan(0, 0), c => null, default));
 
             ex.ParamName.ShouldBe("syntaxRoot");
         }
@@ -27,7 +27,7 @@ namespace CopyFunctionBreakpointName.Tests
         public static async Task Null_semantic_model_accessor_argument_exception()
         {
             var ex = await Should.ThrowAsync<ArgumentNullException>(
-                () => FunctionBreakpointUtils.GetFunctionBreakpointNameFactoryAsync(SyntaxFactory.IdentifierName(""), new TextSpan(0, 0), semanticModelAccessor: null, default));
+                () => FunctionBreakpointUtils.GetFunctionBreakpointNameFactoryAsync(string.Empty, SyntaxFactory.IdentifierName(""), new TextSpan(0, 0), semanticModelAccessor: null, default));
 
             ex.ParamName.ShouldBe("semanticModelAccessor");
         }

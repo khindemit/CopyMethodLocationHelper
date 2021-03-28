@@ -2,6 +2,9 @@ using System;
 using System.ComponentModel.Design;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Tasks;
+using EnvDTE;
+using EnvDTE80;
 using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio.Editor;
 using Microsoft.VisualStudio.Shell;
@@ -27,6 +30,8 @@ namespace CopyFunctionBreakpointName
 
         protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
         {
+            string solutionPath = await GetTheSolutionPathAsync();
+
             var componentModel = (IComponentModel)await GetServiceAsync(typeof(SComponentModel));
             var editorAdaptersFactoryService = componentModel.GetService<IVsEditorAdaptersFactoryService>();
 
@@ -37,11 +42,23 @@ namespace CopyFunctionBreakpointName
             var statusBar = (IVsStatusbar)await GetServiceAsync(typeof(SVsStatusbar));
 
             _ = new CopyFunctionBreakpointNameService(
+                solutionPath,
                 textManager,
                 editorAdaptersFactoryService,
                 menuCommandService,
                 statusBar,
                 JoinableTaskFactory);
+        }
+
+        private async Task<string> GetTheSolutionPathAsync()
+        {
+            DTE2 dte = (DTE2)await GetServiceAsync(typeof(DTE));
+            var solution = dte.Solution;
+            if (dte.Solution.Projects.Count > 0)
+            {
+                return solution.FullName;
+            }
+            return string.Empty;
         }
     }
 }

@@ -11,6 +11,7 @@ namespace CopyFunctionBreakpointName
     public static class FunctionBreakpointUtils
     {
         public static async Task<FunctionBreakpointNameFactory?> GetFunctionBreakpointNameFactoryAsync(
+            string solutionPath,
             SyntaxNode syntaxRoot,
             TextSpan selectionRange,
             Func<CancellationToken, Task<SemanticModel>> semanticModelAccessor,
@@ -21,8 +22,8 @@ namespace CopyFunctionBreakpointName
 
             if (selectionRange.IsEmpty)
             {
-                return await GetFunctionBreakpointNameFactoryAsync(syntaxRoot, new TextSpan(selectionRange.Start, 1), semanticModelAccessor, cancellationToken).ConfigureAwait(false)
-                    ?? await GetFunctionBreakpointNameFactoryAsync(syntaxRoot, new TextSpan(selectionRange.Start - 1, 1), semanticModelAccessor, cancellationToken).ConfigureAwait(false);
+                return await GetFunctionBreakpointNameFactoryAsync(solutionPath, syntaxRoot, new TextSpan(selectionRange.Start, 1), semanticModelAccessor, cancellationToken).ConfigureAwait(false)
+                    ?? await GetFunctionBreakpointNameFactoryAsync(solutionPath, syntaxRoot, new TextSpan(selectionRange.Start - 1, 1), semanticModelAccessor, cancellationToken).ConfigureAwait(false);
             }
 
             if (!(syntaxRoot is CSharpSyntaxNode csharpSyntaxRoot)) return null;
@@ -31,7 +32,7 @@ namespace CopyFunctionBreakpointName
             {
                 case MethodDeclarationSyntax method when IsFunctionNameSpan(method, selectionRange):
                 {
-                    return new FunctionBreakpointNameFactory(method, method.Identifier, accessor: null, method.TypeParameterList, method.ParameterList);
+                    return new FunctionBreakpointNameFactory(solutionPath, method, method.Identifier, accessor: null, method.TypeParameterList, method.ParameterList);
                 }
 
                 case ConstructorDeclarationSyntax constructor when constructor.Identifier.Span.Contains(selectionRange):
@@ -41,6 +42,7 @@ namespace CopyFunctionBreakpointName
                     if (isStatic && constructor.Parent is StructDeclarationSyntax) return null;
 
                     return new FunctionBreakpointNameFactory(
+                        solutionPath,
                         constructor,
                         isStatic ? SyntaxFactory.Identifier("cctor") : constructor.Identifier,
                         accessor: null,
@@ -49,13 +51,13 @@ namespace CopyFunctionBreakpointName
 
                 case DestructorDeclarationSyntax destructor when destructor.Identifier.Span.Contains(selectionRange):
                 {
-                    return new FunctionBreakpointNameFactory(destructor, SyntaxFactory.Identifier("Finalize"), parameters: destructor.ParameterList);
+                    return new FunctionBreakpointNameFactory(solutionPath, destructor, SyntaxFactory.Identifier("Finalize"), parameters: destructor.ParameterList);
                 }
 
                 case PropertyDeclarationSyntax property when property.ExplicitInterfaceSpecifier == null
                                                              && property.Identifier.Span.Contains(selectionRange):
                 {
-                    return new FunctionBreakpointNameFactory(property, property.Identifier);
+                    return new FunctionBreakpointNameFactory(solutionPath, property, property.Identifier);
                 }
 
                 case IndexerDeclarationSyntax indexer when indexer.ExplicitInterfaceSpecifier == null
@@ -63,7 +65,7 @@ namespace CopyFunctionBreakpointName
                 {
                     var semanticModel = await semanticModelAccessor.Invoke(cancellationToken).ConfigureAwait(false);
                     var metadataName = GetMetadataName(indexer, semanticModel);
-                    return new FunctionBreakpointNameFactory(indexer, metadataName);
+                    return new FunctionBreakpointNameFactory(solutionPath, indexer, metadataName);
                 }
 
                 case AccessorDeclarationSyntax accessor when accessor.Keyword.Span.Contains(selectionRange):
@@ -71,19 +73,19 @@ namespace CopyFunctionBreakpointName
                     {
                         case PropertyDeclarationSyntax property when property.ExplicitInterfaceSpecifier == null:
                         {
-                            return new FunctionBreakpointNameFactory(property, property.Identifier, accessor);
+                            return new FunctionBreakpointNameFactory(solutionPath, property, property.Identifier, accessor);
                         }
 
                         case IndexerDeclarationSyntax indexer when indexer.ExplicitInterfaceSpecifier == null:
                         {
                             var semanticModel = await semanticModelAccessor.Invoke(cancellationToken).ConfigureAwait(false);
                             var metadataName = GetMetadataName(indexer, semanticModel);
-                            return new FunctionBreakpointNameFactory(indexer, metadataName, accessor);
+                            return new FunctionBreakpointNameFactory(solutionPath, indexer, metadataName, accessor);
                         }
 
                         case EventDeclarationSyntax @event when @event.ExplicitInterfaceSpecifier == null:
                         {
-                            return new FunctionBreakpointNameFactory(@event, @event.Identifier, accessor);
+                            return new FunctionBreakpointNameFactory(solutionPath, @event, @event.Identifier, accessor);
                         }
 
                         default:
@@ -94,12 +96,13 @@ namespace CopyFunctionBreakpointName
                 {
                     var semanticModel = await semanticModelAccessor.Invoke(cancellationToken).ConfigureAwait(false);
                     var metadataName = GetMetadataName(op, semanticModel);
-                    return new FunctionBreakpointNameFactory(op, metadataName);
+                    return new FunctionBreakpointNameFactory(solutionPath, op, metadataName);
                 }
 
                 case ConversionOperatorDeclarationSyntax op when op.OperatorKeyword.Span.Contains(selectionRange):
                 {
                     return new FunctionBreakpointNameFactory(
+                        solutionPath,
                         op,
                         SyntaxFactory.Identifier(op.ImplicitOrExplicitKeyword.IsKind(SyntaxKind.ExplicitKeyword)
                             ? WellKnownMemberNames.ExplicitConversionName

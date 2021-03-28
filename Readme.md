@@ -1,7 +1,5 @@
 # Copy Method Location extension
 
-[![Build Status](https://jnm2.visualstudio.com/CopyFunctionBreakpointName/_apis/build/status/CI)](https://jnm2.visualstudio.com/CopyFunctionBreakpointName/_build/latest?definitionId=7)
-
 This Visual Studio extension enables you to quickly copy a location of a method or property in C# to the clipboard which you can share with your colleagues.
 This is useful when you do a lot of code reviews and communicate in Slack, or other messenger.
 
